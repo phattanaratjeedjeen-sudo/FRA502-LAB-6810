@@ -1,0 +1,7 @@
+bool request_new_target                
+bool target_reached                   
+geometry_msgs/Point current_position   
+---
+bool success                          
+geometry_msgs/Point target_position    
+string message                       

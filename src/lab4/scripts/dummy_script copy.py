@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from controller_interfaces.dummy_module import dummy_function, dummy_var
+from lab4.dummy_module import dummy_function, dummy_var
 import rclpy
 from rclpy.node import Node
 
