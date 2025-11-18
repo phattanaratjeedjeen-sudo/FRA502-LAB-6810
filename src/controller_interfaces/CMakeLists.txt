@@ -20,6 +20,8 @@ find_package(ament_cmake REQUIRED)		# cpp (optional)
 find_package(rclcpp REQUIRED)			# cpp (optional)
 find_package(ament_cmake_python REQUIRED)   	# python (optional)
 find_package(rclpy REQUIRED)                	# python (optional)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 ######################################################
 
 # Install Python Module
