@@ -1,4 +1,4 @@
-#include "lab2/cpp_header.hpp"
+#include "controller_interfaces/cpp_header.hpp"
 
 #include <iostream>
 
