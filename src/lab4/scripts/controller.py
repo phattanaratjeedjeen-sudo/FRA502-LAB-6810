@@ -55,7 +55,7 @@ class ControllerNode(Node):
         self.endeff_pub = self.create_publisher(PoseStamped, "/end_effector", 10)
 
         # Publisher for singularity warning
-        self.singularity_pub = self.create_publisher(String, "/singularity_warning", 10)
+        # self.singularity_pub = self.create_publisher(String, "/singularity_warning", 10)
 
         # Service server for mode switching
         self.mode_service = self.create_service(Mode, 'set_mode', self.set_mode_callback)
@@ -468,7 +468,7 @@ class ControllerNode(Node):
             # Near singularity - warn and check if trying to escape
             warning_msg = String()
             warning_msg.data = f"SINGULARITY DETECTED! Condition number: {condJ:.2e}"
-            self.singularity_pub.publish(warning_msg)
+            # self.singularity_pub.publish(warning_msg)
             self.get_logger().warn(warning_msg.data, throttle_duration_sec=2.0)
             
             # Compute what joint velocities would result from current command
