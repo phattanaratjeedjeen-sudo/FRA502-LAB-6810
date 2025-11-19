@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation as R  # Import scipy Rotation
 
 
 # Import custom service
-from controller_interfaces.srv import RandomTarget
+from controller_interfaces.srv import Random
 
 # Import your robot
 from lab4.rrr_dh import RRR_Robot
@@ -25,7 +25,7 @@ class RandomPoseNode(Node):
 
         # Service server for Auto Mode to request new targets
         self.target_pub = self.create_publisher(PoseStamped, '/target', 10)
-        self.random_target_service = self.create_service(RandomTarget, 'random_target', self.random_target_callback)
+        self.random_target_service = self.create_service(Random, 'random_target', self.random_target_callback)
 
         # Calculate workspace bounds (spherical shell)
         # Based on link lengths: L2=0.12, L3=0.25, tool=0.28

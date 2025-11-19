@@ -29,6 +29,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/teleop_jog_key.py
   scripts/random_pos.py
+  scripts/controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -49,6 +50,8 @@ install(TARGETS
 ################ INSTALL LAUNCH, ETC #################
 install(DIRECTORY
   # add directories here
+  rviz
+  launch
   DESTINATION share/${PROJECT_NAME})
 
 ament_package()

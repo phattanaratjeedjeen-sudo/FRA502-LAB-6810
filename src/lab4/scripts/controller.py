@@ -14,16 +14,16 @@ from scipy.spatial.transform import Rotation as R  # Import scipy Rotation
 from sensor_msgs.msg import JointState  # Import JointState message
 
 # Custom service
-from controller_interfaces.srv import SetMode, InverseKinematics, RandomTarget
+from controller_interfaces.srv import Mode, IK, Random
 
 # DH Robot
-from lab4.rrr_dh import RRRRobot
+from lab4.rrr_dh import RRR_Robot
 
 
 class ControllerNode(Node):
     def __init__(self):
         super().__init__('controller_node')
-        self.robot = RRRRobot()
+        self.robot = RRR_Robot()
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
@@ -58,13 +58,13 @@ class ControllerNode(Node):
         self.singularity_pub = self.create_publisher(String, "/singularity_warning", 10)
 
         # Service server for mode switching
-        self.mode_service = self.create_service(SetMode, 'set_mode', self.set_mode_callback)
+        self.mode_service = self.create_service(Mode, 'set_mode', self.set_mode_callback)
 
         # Service server for IPK (Inverse Position Kinematics)
-        self.ipk_service = self.create_service(InverseKinematics, 'inverse_kinematics', self.ipk_service_callback)
+        self.ipk_service = self.create_service(IK, 'inverse_kinematics', self.ipk_service_callback)
 
         # Service client for Auto Mode - request random targets
-        self.random_target_client = self.create_client(RandomTarget, 'random_target')
+        self.random_target_client = self.create_client(Random, 'random_target')
 
         # Auto Mode state
         self.am_target_reached = False
