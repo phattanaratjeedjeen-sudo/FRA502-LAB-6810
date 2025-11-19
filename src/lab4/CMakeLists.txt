@@ -27,7 +27,8 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/dummy_script.py
+  scripts/teleop_jog_key.py
+  scripts/random_pos.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

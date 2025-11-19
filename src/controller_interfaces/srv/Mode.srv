@@ -1,4 +1,0 @@
-string mode              # Mode: "IPK", "TO", or "AM", or "IDLE"
----
-bool success            
-string message          

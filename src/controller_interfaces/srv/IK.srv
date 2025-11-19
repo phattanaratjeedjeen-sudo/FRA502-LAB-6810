@@ -1,5 +1,0 @@
-geometry_msgs/Point target_position   # Target point (x, y, z)
----
-bool success           
-float64[] solution    
-string message       
