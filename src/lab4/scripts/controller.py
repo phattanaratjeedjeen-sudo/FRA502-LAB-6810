@@ -41,7 +41,7 @@ class ControllerNode(Node):
         self.teleop_frame = "world"  # Default is world frame
 
         # Initialize joint positions
-        self.initial_pose = np.array([0.0, 0.0 , -np.pi/2 ])
+        self.initial_pose = np.array([0.0, -np.pi/4 , -np.pi/2 ])
         self.robot.qz = self.initial_pose.copy()
 
         self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', 10)

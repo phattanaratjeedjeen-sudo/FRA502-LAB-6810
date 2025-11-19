@@ -35,7 +35,7 @@ def generate_launch_description():
             'source_list': ['joint_states'],
             'zeros': {
                 'joint_1': 0.0,
-                'joint_2': 0.0,  
+                'joint_2': -np.pi/4,  
                 'joint_3': -np.pi/2    
             }
         }]

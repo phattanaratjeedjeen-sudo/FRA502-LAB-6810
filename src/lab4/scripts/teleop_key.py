@@ -47,9 +47,9 @@ def getKey(settings):
     return key
 
 
-class TeleopJogKey(Node):
+class TeleopKey(Node):
     def __init__(self):
-        super().__init__('teleop_jog_key')
+        super().__init__('teleop_key')
         self.vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         qos = QoSProfile(
             depth=10,
@@ -116,7 +116,7 @@ class TeleopJogKey(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TeleopJogKey()
+    node = TeleopKey()
 
     # Save terminal settings
     settings = termios.tcgetattr(sys.stdin)

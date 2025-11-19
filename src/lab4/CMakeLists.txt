@@ -27,7 +27,7 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/teleop_jog_key.py
+  scripts/teleop_key.py
   scripts/random_pos.py
   scripts/controller.py
   DESTINATION lib/${PROJECT_NAME}
