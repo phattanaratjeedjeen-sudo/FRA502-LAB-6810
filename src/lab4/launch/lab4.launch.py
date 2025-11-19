@@ -35,15 +35,15 @@ def generate_launch_description():
             'source_list': ['joint_states'],
             'zeros': {
                 'joint_1': 0.0,
-                'joint_2': np.pi/2 ,  
-                'joint_3': np.pi/2    
+                'joint_2': 0.0,  
+                'joint_3': -np.pi/2    
             }
         }]
     )
 
     controller_node = Node(
         package=lab4_pkg,
-        executable='controller_bt.py',
+        executable='controller.py',
         name='controller_node',
         output='screen',
     )

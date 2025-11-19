@@ -41,7 +41,7 @@ class ControllerNode(Node):
         self.teleop_frame = "world"  # Default is world frame
 
         # Initialize joint positions
-        self.initial_pose = np.array([0.0, 0.0, -np.pi/2])
+        self.initial_pose = np.array([0.0, 0.0 , -np.pi/2 ])
         self.robot.qz = self.initial_pose.copy()
 
         self.joint_state_publisher = self.create_publisher(JointState, 'joint_states', 10)
@@ -89,7 +89,7 @@ class ControllerNode(Node):
         target_msg.pose.position.z = float(position[2])
         self.target_pub.publish(target_msg)
 
-    def endeff_publisher(self, position):
+    def endeff_publisher(self, position, rotation_matrix):
         endeff_msg = PoseStamped()
         endeff_msg.header = Header()
         endeff_msg.header.stamp = self.get_clock().now().to_msg()
@@ -97,6 +97,15 @@ class ControllerNode(Node):
         endeff_msg.pose.position.x = float(position[0])
         endeff_msg.pose.position.y = float(position[1])
         endeff_msg.pose.position.z = float(position[2])
+        
+        # Convert rotation matrix to quaternion
+        r = R.from_matrix(rotation_matrix)
+        quat = r.as_quat()  # Returns [x, y, z, w]
+        endeff_msg.pose.orientation.x = float(quat[0])
+        endeff_msg.pose.orientation.y = float(quat[1])
+        endeff_msg.pose.orientation.z = float(quat[2])
+        endeff_msg.pose.orientation.w = float(quat[3])
+        
         self.endeff_pub.publish(endeff_msg)
 
     def cmd_vel_callback(self, msg):
@@ -168,7 +177,7 @@ class ControllerNode(Node):
             self.get_logger().warn("Random target service not available")
             return False
 
-        request = RandomTarget.Request()
+        request = Random.Request()
         request.request_new_target = True
 
         self.get_logger().info(f"[SERVICE CALL] Calling /random_target with request_new_target={request.request_new_target}")
@@ -352,8 +361,8 @@ class ControllerNode(Node):
         T_translation = T_current[0:3, 3]
         T_rot = T_current[0:3, 0:3]
 
-        # Publish end-effector position
-        self.endeff_publisher(T_translation)
+        # Publish end-effector position and orientation
+        self.endeff_publisher(T_translation, T_rot)
 
         # Mode-specific control logic
         if self.mode == "TO":
