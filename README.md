@@ -59,7 +59,7 @@ This manipulator has 3 mode
    ```
 
    3.3 TO mode
-      - comback to TO mode 
+      - comeback to TO mode 
       - **remember that user has to stay active on the terminal which runs teleop_key.py**
    ```bash
    ros2 service call /set_mode controller_interfaces/srv/Mode "{mode: 'TO'}"
