@@ -43,9 +43,9 @@ class DummyNode(Node):
         self.static_tf_broadcaster.sendTransform([t1, t2])
 
 
-    def odom_tf_pub(self, msg, turtle_id, publisher):
-        x = msg.x
-        y = msg.y
+    def odom_tf_pub(self, msg:Pose, turtle_id, publisher):
+        x = msg.x - 5.4 
+        y = msg.y - 5.4
         theta = msg.theta
 
         odom_msg = Odometry()
@@ -80,11 +80,11 @@ class DummyNode(Node):
         self.tf_broadcaster.sendTransform(t)
 
 
-    def pose1_callback(self, msg):
+    def pose1_callback(self, msg:Pose):
         self.odom_tf_pub(msg, 1, self.odom1_publisher)
 
 
-    def pose2_callback(self, msg):
+    def pose2_callback(self, msg:Pose):
         self.odom_tf_pub(msg, 2, self.odom2_publisher)
 
 
