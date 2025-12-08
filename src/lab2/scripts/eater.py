@@ -29,8 +29,6 @@ class EaterNode(Node):
         self.pizza_limit = 5
         self.eat_all = False
         self.total_spawned = 1
-        self.ei_dis = 0.0
-        self.ei_ang = 0.0
 
         self.get_logger().info(f'Eater_node: run, Default max pizza: {self.pizza_limit}')
 
@@ -44,7 +42,6 @@ class EaterNode(Node):
     def turtle_eat(self):
         eat_request = Empty.Request()
         self.eat_pizza_client.call_async(eat_request)
-        self.get_logger().info(f'Eat pizza: {self.pizza_count} from {self.pizza_limit}')
 
     def spawn_pizza(self, x, y):
         if self.total_spawned <= self.pizza_limit:
@@ -82,27 +79,25 @@ class EaterNode(Node):
         if self.eat_all:
             dx = self.target_position[0] - self.turtle_pose[0]
             dy = self.target_position[1] - self.turtle_pose[1]
-        else:
+        elif len(self.target_position_queue) >= 2:
             dx = self.target_position_queue[0] - self.turtle_pose[0]
             dy = self.target_position_queue[1] - self.turtle_pose[1]
 
         alpha = np.arctan2(dy, dx)
         e_dis = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
-        self.ei_dis += e_dis*0.01
         e_ang = alpha - self.turtle_pose[2]
         e_ang = np.arctan2(np.sin(e_ang), np.cos(e_ang))
-        self.ei_ang += e_ang*0.01
-        msg.linear.x = 0.5 * e_dis + 0.02 * self.ei_dis
-        msg.angular.z = 5.5 * e_ang + 0.05 * self.ei_ang
+        msg.linear.x = 1.0 * e_dis
+        msg.angular.z = 5.5 * e_ang 
         
         if e_dis < 0.8:
             msg.linear.x = 0.0
             msg.angular.z = 0.0
+            self.get_logger().info(f'Eat pizza: {self.pizza_count} / {self.pizza_limit}')
+            if not self.eat_all:
+                self.turtle_eat()
             if len(self.target_position_queue) > 2:
                 self.target_position_queue = np.delete(self.target_position_queue, [0,1])
-                self.turtle_eat()
-            elif not self.eat_all:
-                self.turtle_eat()
 
         self.cmd_vel_pub.publish(msg)
         

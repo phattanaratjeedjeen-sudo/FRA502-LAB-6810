@@ -24,8 +24,6 @@ class KillerNode(Node):
         self.pizza_count = 0
         self.pizza_limit = 5
         self.eat_all = False
-        self.ei_dis = 0.0
-        self.ei_ang = 0.0
 
         self.get_logger().info('killer_node: run')
 
@@ -58,12 +56,10 @@ class KillerNode(Node):
             dy = self.turtle1_pose[1] - self.turtle2_pose[1]
             alpha = np.arctan2(dy, dx)
             e_dis = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
-            self.ei_dis += e_dis*0.01
             e_ang = alpha - self.turtle2_pose[2]
             e_ang = np.arctan2(np.sin(e_ang), np.cos(e_ang))
-            self.ei_ang += e_ang*0.01
-            msg.linear.x = 0.5 * e_dis + 0.05 * self.ei_dis
-            msg.angular.z = 5.5 * e_ang + 0.05 * self.ei_ang
+            msg.linear.x = 1.2 * e_dis 
+            msg.angular.z = 6.0 * e_ang
 
             if e_dis < 1.0:
                 self.kill_turtle_callback()
