@@ -9,36 +9,25 @@ from std_msgs.msg import Int64
 from turtlesim_plus_interfaces.srv import GivePosition
 from std_srvs.srv import Empty
 
-class DummyNode(Node):
+class EaterNode(Node):
     def __init__(self):
         super().__init__('eater_node')
-        # pub turtle1/cmd_vel
         self.cmd_vel_pub = self.create_publisher(Twist, '/turtle1/cmd_vel', 10)
+        self.create_subscription(Pose, '/turtle1/pose', self.pose_callback, 10)
+        self.create_subscription(Int64, '/turtle1/pizza_count', self.pizza_count_callback, 10)
+        self.create_subscription(Point, '/mouse_position', self.mouse_position_callback, 10)
+        self.create_subscription(PoseStamped, '/goal_pose', self.goal_pose_callback, 10)
+        self.spawn_pizza_client = self.create_client(GivePosition, '/spawn_pizza')
+        self.eat_pizza_client = self.create_client(Empty, '/turtle1/eat')
         self.create_timer(0.1, self.timer_callback)
 
-        # sub turtle1/pose
-        self.create_subscription(Pose, '/turtle1/pose', self.pose_callback, 10)
         self.turtle_pose = np.array([0.0, 0.0, 0.0])
-
-        # sub mouse_position
-        self.create_subscription(Point, '/mouse_position', self.mouse_position_callback, 10)
         self.mouse_position = np.array([0.0, 0.0])
         self.mouse_position_q = np.array([5.0, 5.0])
-
-        # client spawn_pizza
-        self.spawn_pizza_client = self.create_client(GivePosition, '/spawn_pizza')
-        
-        # client turtle_eat
-        self.eat_pizza_client = self.create_client(Empty, '/turtle1/eat')
-
-        # sub pizza_count
-        self.create_subscription(Int64, '/turtle1/pizza_count', self.pizza_count_callback, 10)
+        self.goal_position = np.array([0.0, 0.0])
         self.pizza_count = 0
         self.pizza_limit = 5
 
-        # sub goal_pose
-        self.create_subscription(PoseStamped, '/goal_pose', self.goal_pose_callback, 10)
-        self.goal_position = np.array([0.0, 0.0])
         self.get_logger().info('eater_node: run')
 
     def turtle_eat(self):
@@ -51,18 +40,16 @@ class DummyNode(Node):
         position_request.y = y
         self.spawn_pizza_client.call_async(position_request)
 
-    def goal_pose_callback(self, msg):
+    def goal_pose_callback(self, msg:PoseStamped):
         self.goal_position[0] = msg.pose.position.x
         self.goal_position[1] = msg.pose.position.y
-        # self.goal_x = self.goal_position[0]
-        # self.goal_y = self.goal_position[1]
         self.mouse_position_q = np.append(self.mouse_position_q, self.goal_position)
 
-    def pizza_count_callback(self, msg):
+    def pizza_count_callback(self, msg:Int64):
         self.pizza_count = msg.data
         self.get_logger().info(f'Eat pizza: {self.pizza_count} from {self.pizza_limit}')
 
-    def mouse_position_callback(self, msg):
+    def mouse_position_callback(self, msg:Point):
         self.mouse_position[0] = msg.x
         self.mouse_position[1] = msg.y
         self.mouse_position_q = np.append(self.mouse_position_q, self.mouse_position)
@@ -85,9 +72,6 @@ class DummyNode(Node):
         else:
             dx = self.mouse_position[0] - self.turtle_pose[0]
             dy = self.mouse_position[1] - self.turtle_pose[1]
-            # self.get_logger().info(f'x: {self.mouse_position[0]}, y: {self.mouse_position[1]}')
-            # self.get_logger().info(f'tx: {self.turtle_pose[0]}, ty: {self.turtle_pose[1]}')
-            # self.get_logger().info(f'dx: {dx}, dy: {dy}')
 
         self.d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
         alpha = np.arctan2(dy, dx)
@@ -108,7 +92,7 @@ class DummyNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = DummyNode()
+    node = EaterNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

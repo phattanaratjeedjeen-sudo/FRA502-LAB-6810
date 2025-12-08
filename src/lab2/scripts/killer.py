@@ -8,28 +8,21 @@ import numpy as np
 from turtlesim.srv import Kill
 from std_msgs.msg import Int64
 
-class DummyNode(Node):
+class KillerNode(Node):
     def __init__(self):
         super().__init__('killer_node')
-    # client remove_turtle
-        self.remove_turtle_client = self.create_client(Kill, '/remove_turtle')
-    
-    # sub turtle1/pose
         self.create_subscription(Pose, '/turtle1/pose', self.pose1_callback, 10)
-        self.turtle1_pose = np.array([0.0, 0.0, 0.0])
-    
-    # sub turtle2/pose
         self.create_subscription(Pose, '/turtle2/pose', self.pose2_callback, 10)
-        self.turtle2_pose = np.array([0.0, 0.0, 0.0])
-    
-    # sub pizza_count
         self.create_subscription(Int64, '/turtle1/pizza_count', self.pizza_count_callback, 10)
+        self.cmd_vel_pub = self.create_publisher(Twist, '/turtle2/cmd_vel', 10)
+        self.remove_turtle_client = self.create_client(Kill, '/remove_turtle')
+        self.create_timer(0.1, self.timer_callback)
+
+        self.turtle1_pose = np.array([0.0, 0.0, 0.0])
+        self.turtle2_pose = np.array([0.0, 0.0, 0.0])
         self.pizza_count = 0
         self.pizza_limit = 5
 
-    # pub turtle2_cmd_vel
-        self.cmd_vel_pub = self.create_publisher(Twist, '/turtle2/cmd_vel', 10)
-        self.create_timer(0.1, self.timer_callback)
         self.get_logger().info('killer_node: run')
     
     def kill_turtle_callback(self):
@@ -74,7 +67,7 @@ class DummyNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = DummyNode()
+    node = KillerNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

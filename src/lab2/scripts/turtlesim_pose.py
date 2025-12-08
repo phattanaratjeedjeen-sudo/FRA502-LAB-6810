@@ -13,15 +13,13 @@ class DummyNode(Node):
         super().__init__('odom_pub')
         self.odom1_publisher = self.create_publisher(Odometry, '/odom1', 10)
         self.odom2_publisher = self.create_publisher(Odometry, '/odom2', 10)
-        self.tf_broadcaster = TransformBroadcaster(self)
-        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
-
-        self.pub_static_tf()
-
         self.create_subscription(Pose, '/turtle1/pose', self.pose1_callback, 10)
         self.create_subscription(Pose, '/turtle2/pose', self.pose2_callback, 10)
-
+        self.tf_broadcaster = TransformBroadcaster(self)
+        self.static_tf_broadcaster = StaticTransformBroadcaster(self)
+        self.pub_static_tf()
         self.get_logger().info('odom_pub: run')
+
 
     def pub_static_tf(self):
         t1 = TransformStamped()
@@ -43,6 +41,7 @@ class DummyNode(Node):
         t2.transform.rotation.w = 1.0
 
         self.static_tf_broadcaster.sendTransform([t1, t2])
+
 
     def odom_tf_pub(self, msg, turtle_id, publisher):
         x = msg.x
@@ -80,8 +79,10 @@ class DummyNode(Node):
 
         self.tf_broadcaster.sendTransform(t)
 
+
     def pose1_callback(self, msg):
         self.odom_tf_pub(msg, 1, self.odom1_publisher)
+
 
     def pose2_callback(self, msg):
         self.odom_tf_pub(msg, 2, self.odom2_publisher)
