@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 from turtlesim.msg import Pose
 from turtlesim.srv import Kill
 from std_msgs.msg import Int64
+from controller_interfaces.srv import SetParam, SetMaxPizza
 import math
 
 
@@ -18,11 +19,17 @@ class KillerNode(Node):
 
         self.create_subscription(Pose, '/turtle1/pose', self.target_callback, 10)
         self.create_subscription(Int64, '/turtle1/pizza_count', self.pizza_count_callback, 10)
-        self.create_subscription(Int64, '/set_max_pizza', self.set_max_pizza_callback, 10)
+
+        self.create_service(SetParam, '/set_param', self.set_gain_callback)
+        self.create_service(SetMaxPizza, '/set_max_pizza', self.set_max_pizza_callback)
 
         self.eat_pizza_client = self.create_client(Kill, '/remove_turtle')
 
-        self.timer = self.create_timer(0.01, self.timer_callback)
+        self.declare_parameter('rate', 100.0)
+        self.rate = self.get_parameter('rate').get_parameter_value().double_value
+
+        self.kp_linear = 0.5
+        self.kp_angular = 1.0
 
         self.current_target = None
         self.current_pose = [0.0, 0.0, 0.0]
@@ -30,12 +37,23 @@ class KillerNode(Node):
         self.pizza_cnt = 0
         self.max_pizza = 5
 
-        self.get_logger().info('killer_node: run.')
+        self.ns = self.get_namespace()
+
+        self.timer = self.create_timer(1/self.rate, self.timer_callback)
+        self.get_logger().info(f'Run killer node with default gains kp_linear={self.kp_linear}, kp_angular={self.kp_angular}, rate={self.rate}Hz.')
+
+    def set_gain_callback(self, request: SetParam.Request, response: SetParam.Response):
+        self.kp_linear = request.kp_linear.data
+        self.kp_angular = request.kp_angular.data
+        return response
 
     def target_callback(self, msg: Pose):
         if self.pizza_cnt == self.max_pizza:
             self.current_target = [msg.x, msg.y]
             self.controller_enable = True
+        else:
+            self.controller_enable = False
+            self.cmd_vel(0.0, 0.0)
 
     def pose_callback(self, msg: Pose):
         self.current_pose[0] = msg.x
@@ -45,8 +63,13 @@ class KillerNode(Node):
     def pizza_count_callback(self, msg: Int64):
         self.pizza_cnt = msg.data
 
-    def set_max_pizza_callback(self, msg : Int64):
-        self.max_pizza = msg.data
+    def set_max_pizza_callback(self, request: SetMaxPizza.Request, response: SetMaxPizza.Response):
+        if request.max_pizza.data > self.max_pizza:
+            self.max_pizza = request.max_pizza.data
+            response.log.data = "success"
+        else:
+            response.log.data = "failed"
+        return response
 
     def kill_turtle(self, name : str):
         kill_request = Kill.Request()
@@ -68,12 +91,13 @@ class KillerNode(Node):
             e_ori = math.atan2(dy, dx) - self.current_pose[2]
             e_ori = math.atan2(math.sin(e_ori), math.cos(e_ori))
 
-            u_dis = 2 * e_dis
-            u_ori = 10 * e_ori
+            u_dis = self.kp_linear * e_dis
+            u_ori = self.kp_angular * e_ori
 
-            if (abs(dx) < 0.1 and abs(dy) < 0.1):
+            if e_dis < 0.5:
                 self.cmd_vel(0.0, 0.0)
                 self.kill_turtle('turtle1')
+                # self.kill_turtle(self.ns)
                 self.controller_enable = False
             else:
                 self.cmd_vel(u_dis, u_ori)
