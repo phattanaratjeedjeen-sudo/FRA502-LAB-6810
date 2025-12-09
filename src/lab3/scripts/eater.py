@@ -14,21 +14,20 @@ import math
 class EaterNode(Node):
     def __init__(self):
         super().__init__('eater_node')
-
-        self.pub_cmdvel = self.create_publisher(Twist, '/turtle1/cmd_vel', 10) 
-        self.create_subscription(Pose, '/turtle1/pose', self.pose_callback, 10)
-        self.create_subscription(Int64, '/turtle1/pizza_count', self.eat_pizza_count_callback, 10)
+        self.pub_cmdvel = self.create_publisher(Twist, 'cmd_vel', 10) 
+        self.create_subscription(Pose, 'pose', self.pose_callback, 10)
+        self.create_subscription(Int64, 'pizza_count', self.eat_pizza_count_callback, 10)
         self.create_subscription(Point, '/mouse_position', self.mouse_position_callback, 10)
-        self.create_subscription(PoseStamped, '/goal_pose', self.rviz_position_callback, 10)
+        self.create_subscription(PoseStamped, 'goal_pose', self.rviz_position_callback, 10)
 
-        self.create_service(SetParam, '/set_param', self.set_gain_callback)
+        self.create_service(SetParam, 'set_controller_param', self.set_gain_callback)
         self.create_service(SetMaxPizza, '/set_max_pizza', self.set_max_pizza_callback)
 
         self.spawn_pizza_client = self.create_client(GivePosition, '/spawn_pizza')
-        self.eat_pizza_client = self.create_client(Empty, '/turtle1/eat')
+        self.eat_pizza_client = self.create_client(Empty, 'eat')
 
-        self.declare_parameter('rate', 100.0)
-        self.rate = self.get_parameter('rate').get_parameter_value().double_value
+        self.declare_parameter('sampling_frequency', 100.0)
+        self.sampling_frequency = self.get_parameter('sampling_frequency').get_parameter_value().double_value
 
         self.max_pizza = 5
         self.pizza_cnt = 0
@@ -42,8 +41,8 @@ class EaterNode(Node):
         self.controller_enable = False
         self.is_eat_all = False
 
-        self.create_timer(1/self.rate, self.timer_callback)
-        self.get_logger().info(f'Run eater node with default gains kp_linear={self.kp_linear}, kp_angular={self.kp_angular}, rate={self.rate}Hz.')
+        self.create_timer(1/self.sampling_frequency, self.timer_callback)
+        self.get_logger().info(f'Run eater node with default gains kp_linear={self.kp_linear}, kp_angular={self.kp_angular}, sampling_frequency={self.sampling_frequency}Hz.')
 
     def set_gain_callback(self, request: SetParam.Request, response: SetParam.Response):
         self.kp_linear = request.kp_linear.data
@@ -80,7 +79,6 @@ class EaterNode(Node):
             self.controller_enable = False
             while len(self.target_queue) > 1:
                 self.target_queue.pop(0)
-        self.get_logger().info(f'Mouse Position: x={msg.x}, y={msg.y}')
 
     def rviz_position_callback(self, msg: PoseStamped):
         point = [msg.pose.position.x + 5.40, msg.pose.position.y + 5.38]
@@ -124,7 +122,7 @@ class EaterNode(Node):
             u_dis = self.kp_linear * e_dis
             u_ori = self.kp_angular * e_ori
 
-            if (abs(dx) < 0.1 and abs(dy) < 0.1):
+            if e_dis < 0.5:
                 self.cmd_vel(0.0, 0.0)
                 if not self.is_eat_all:
                     self.eat_pizza()

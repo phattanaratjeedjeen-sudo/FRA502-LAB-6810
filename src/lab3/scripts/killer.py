@@ -13,20 +13,21 @@ import math
 class KillerNode(Node):
     def __init__(self):
         super().__init__('killer_node')
+        self.pub_cmdvel = self.create_publisher(Twist, 'cmd_vel', 10) 
+        self.create_subscription(Pose, 'pose', self.pose_callback, 10)
 
-        self.pub_cmdvel = self.create_publisher(Twist, '/turtle2/cmd_vel', 10) 
-        self.create_subscription(Pose, '/turtle2/pose', self.pose_callback, 10)
+        self.create_subscription(Pose, '/pose', self.target_callback, 10)
+        self.create_subscription(Int64, '/pizza_count', self.pizza_count_callback, 10)
 
-        self.create_subscription(Pose, '/turtle1/pose', self.target_callback, 10)
-        self.create_subscription(Int64, '/turtle1/pizza_count', self.pizza_count_callback, 10)
-
-        self.create_service(SetParam, '/set_param', self.set_gain_callback)
+        self.create_service(SetParam, 'set_controller_param', self.set_gain_callback)
         self.create_service(SetMaxPizza, '/set_max_pizza', self.set_max_pizza_callback)
 
         self.eat_pizza_client = self.create_client(Kill, '/remove_turtle')
-
-        self.declare_parameter('rate', 100.0)
-        self.rate = self.get_parameter('rate').get_parameter_value().double_value
+        
+        self.declare_parameter('sampling_frequency', 100.0)
+        self.declare_parameter('kill_target', 'turtle_eater')
+        self.sampling_frequency = self.get_parameter('sampling_frequency').get_parameter_value().double_value
+        self.kill_target = self.get_parameter('kill_target').get_parameter_value().string_value
 
         self.kp_linear = 0.5
         self.kp_angular = 1.0
@@ -37,10 +38,8 @@ class KillerNode(Node):
         self.pizza_cnt = 0
         self.max_pizza = 5
 
-        self.ns = self.get_namespace()
-
-        self.timer = self.create_timer(1/self.rate, self.timer_callback)
-        self.get_logger().info(f'Run killer node with default gains kp_linear={self.kp_linear}, kp_angular={self.kp_angular}, rate={self.rate}Hz.')
+        self.timer = self.create_timer(1/self.sampling_frequency, self.timer_callback)
+        self.get_logger().info(f'Run killer node with default gains kp_linear={self.kp_linear}, kp_angular={self.kp_angular}, sampling_frequency={self.sampling_frequency}Hz.')
 
     def set_gain_callback(self, request: SetParam.Request, response: SetParam.Response):
         self.kp_linear = request.kp_linear.data
@@ -96,8 +95,7 @@ class KillerNode(Node):
 
             if e_dis < 0.5:
                 self.cmd_vel(0.0, 0.0)
-                self.kill_turtle('turtle1')
-                # self.kill_turtle(self.ns)
+                self.kill_turtle(self.kill_target)
                 self.controller_enable = False
             else:
                 self.cmd_vel(u_dis, u_ori)

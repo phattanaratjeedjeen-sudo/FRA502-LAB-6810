@@ -7,61 +7,65 @@ def generate_launch_description():
     
     launch_description = LaunchDescription()
 
-    interface_type = 'lab1_interfaces/srv/SetNoise'
-    noise_properties = [
-        ('linear', 1.0, 0.1),
-        ('angular', 0.0, 3.0)
-    ]
-    
-    for ns, mean, var in noise_properties:
-        set_noise = ExecuteProcess(
-            cmd=[['ros2 service call ',str(ns),'/set_noise ',interface_type,' ',f'"{{mean: {{data: {mean}}},variance: {{data: {var}}}}}"']],
-            shell=True
-        )
-
-    rate = LaunchConfiguration('rate')
-    rate_launch_arg = DeclareLaunchArgument(
-        'rate',
-        default_value='5.5'
-    )
-    
     turtlesim_node = Node(
-            package='turtlesim_plus',
-            namespace='',
-            executable='turtlesim_plus_node.py',
-            name='turtlesim'
-        )
-    
-
-    package_name = 'lab1'
-    executable_noise = 'noise_generator.py'
-    namespace = ['linear', 'angular']
-    rate = [9.5, 7.5]
-    for i in range(len(namespace)):
-        noise_gen = Node(
-            package=package_name,
-            namespace=namespace[i],
-            executable=executable_noise,
-            name=namespace[i] + '_noise',
-            parameters=[
-                {'rate': rate[i]}
-            ]
-        )
-        
-
-    velo_mux = Node(
-        package=package_name,
+        package='turtlesim_plus',
         namespace='',
-        executable='velocity_mux.py',
-        name='mux',
-        remappings=[('/cmd_vel', 'turtle1/cmd_vel')],
-        parameters=[{'rate':25.0}]
+        executable='turtlesim_plus_node.py',
+        name='turtlesim'
         )
     
+    kill_turtle1 = ExecuteProcess(
+        cmd=['ros2 service call /remove_turtle turtlesim/srv/Kill "{name: turtle1}"'],
+        shell=True
+    )    
+
+    pkg = 'lab3'
+    # [executable, namespace, name]
+    killer = ['killer.py', 'killer_turtle', 'killer_node'] 
+    eater = ['eater.py', 'eater_turtle', 'eater_node']
+    sampling_frequency = 100.0
+
+    killer_node = Node(
+        package=pkg,
+        executable=killer[0],
+        namespace=killer[1],
+        name=killer[2],
+        parameters=[
+            {'sampling_frequency': sampling_frequency},
+            {'kill_target': eater[1]}
+        ],
+        remappings=[
+            ('/pose', f'/{eater[1]}/pose'),
+            ('/pizza_count', f'/{eater[1]}/pizza_count')
+        ],
+    )
+  
+    eater_node = Node(
+        package=pkg,
+        executable=eater[0],
+        namespace=eater[1],
+        name=eater[2],
+        parameters=[
+            {'sampling_frequency': sampling_frequency}
+        ],
+    )
+
+    spawn_killer = ExecuteProcess(
+        cmd=[['ros2 service call /spawn_turtle turtlesim/srv/Spawn ',f'"{{x: 5.5, y: 5.5, theta: 0.0, name: \'{killer[1]}\'}}"']],
+        shell=True
+    )
+
+    spawn_eater = ExecuteProcess(
+        cmd=[['ros2 service call /spawn_turtle turtlesim/srv/Spawn ',f'"{{x: 5.5, y: 5.5, theta: 0.0, name: \'{eater[1]}\'}}"']],
+        shell=True
+    )
+
+
     launch_description.add_action(turtlesim_node)
-    launch_description.add_action(noise_gen)
-    launch_description.add_action(rate_launch_arg)
-    launch_description.add_action(velo_mux)
-    launch_description.add_action(set_noise)
+    launch_description.add_action(kill_turtle1)
+    launch_description.add_action(spawn_eater)
+    launch_description.add_action(spawn_killer)
+    launch_description.add_action(killer_node)
+    launch_description.add_action(eater_node)
 
     return launch_description
